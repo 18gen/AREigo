@@ -6,35 +6,69 @@
 //
 
 import SwiftUI
-import RealityKit
 
-struct ContentView : View {
+struct ContentView: View {
+    @EnvironmentObject private var model: DetectorModel
+    @State private var showSaved = false
+    @State private var showHUD: SavedHUD? = nil
 
     var body: some View {
-        RealityView { content in
+        ZStack {
+            ARViewContainer()
+                .environmentObject(model)
+                .edgesIgnoringSafeArea(.all)
 
-            // Create a cube model
-            let model = Entity()
-            let mesh = MeshResource.generateBox(size: 0.1, cornerRadius: 0.005)
-            let material = SimpleMaterial(color: .gray, roughness: 0.15, isMetallic: true)
-            model.components.set(ModelComponent(mesh: mesh, materials: [material]))
-            model.position = [0, 0.05, 0]
+            // Detection overlay
+            DetectionOverlay(
+                observations: model.observations,
+                onTap: { obs in
+                    let item = model.save(observation: obs)
+                    showHUD = SavedHUD(wordEN: item.english, wordJA: item.japanese)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { showHUD = nil }
+                }
+            )
 
-            // Create horizontal plane anchor for the content
-            let anchor = AnchorEntity(.plane(.horizontal, classification: .any, minimumBounds: SIMD2<Float>(0.2, 0.2)))
-            anchor.addChild(model)
+            // Top controls
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        showSaved = true
+                    } label: {
+                        Label("Saved", systemImage: "bookmark")
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Capsule())
+                    }
+                    .padding(.top, 14).padding(.trailing, 14)
+                }
+                Spacer()
+            }
 
-            // Add the horizontal plane anchor to the scene
-            content.add(anchor)
-
-            content.camera = .spatialTracking
-
+            if let hud = showHUD {
+                VStack {
+                    Text("Saved")
+                        .font(.caption2).padding(.top, 8)
+                    Text("\(hud.wordEN) / \(hud.wordJA)")
+                        .font(.callout).bold()
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                .transition(.opacity)
+            }
         }
-        .edgesIgnoringSafeArea(.all)
+        .sheet(isPresented: $showSaved) {
+            SavedListView()
+                .environmentObject(model)
+        }
     }
 
+    struct SavedHUD: Identifiable {
+        let id = UUID()
+        let wordEN: String
+        let wordJA: String
+    }
 }
 
 #Preview {
-    ContentView()
+    ContentView().environmentObject(DetectorModel())
 }
