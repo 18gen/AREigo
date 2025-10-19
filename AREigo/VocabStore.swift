@@ -14,6 +14,7 @@ struct VocabItem: Identifiable, Codable {
     var count: Int
     var firstSavedAt: Date
     var lastSeenAt: Date
+    var imageFilename: String?   // relative file name under Documents/thumbnails/
 }
 
 final class VocabStore {
@@ -40,5 +41,21 @@ final class VocabStore {
         } catch {
             print("Failed to save vocab: \(error)")
         }
+    }
+
+    // MARK: - Thumbnails helpers
+
+    static func thumbnailsDir() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: dir.path) {
+            do { try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true) }
+            catch { print("Failed to create thumbnails dir: \(error)") }
+        }
+        return dir
+    }
+
+    static func thumbnailURL(for filename: String) -> URL {
+        thumbnailsDir().appendingPathComponent(filename)
     }
 }
