@@ -24,33 +24,35 @@ struct SavedListView: View {
         NavigationStack {
             List {
                 ForEach(filtered) { item in
-                    HStack(alignment: .center, spacing: 12) {
-                        ThumbnailView(filename: item.imageFilename)
-                            .frame(width: 56, height: 56)
+                    NavigationLink {
+                        SavedDetailView(item: item)
+                    } label: {
+                        HStack(alignment: .center, spacing: 12) {
+                            ThumbnailView(filename: item.imageFilename)
+                                .frame(width: 56, height: 56)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            // Bilingual emphasis
-                            Text("\(item.english) / \(item.japanese)")
-                                .font(.headline)
+                            VStack(alignment: .leading, spacing: 4) {
+                                // Bilingual emphasis
+                                Text("\(item.english) / \(item.japanese)")
+                                    .font(.headline)
 
-                            HStack(spacing: 12) {
-                                Label("Seen \(item.count)x", systemImage: "checkmark.circle")
-                                    .font(.caption).foregroundStyle(.secondary)
-                                Text(item.lastSeenAt, style: .date)
-                                    .font(.caption2).foregroundStyle(.secondary)
+                                HStack(spacing: 12) {
+                                    Label("Seen \(item.count)x", systemImage: "checkmark.circle")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    Text(item.lastSeenAt, style: .date)
+                                        .font(.caption2).foregroundStyle(.secondary)
+                                }
                             }
+                            Spacer()
                         }
-                        Spacer()
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
                 .onDelete(perform: delete)
             }
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic))
             .navigationTitle("Saved / 保存済み")
-            .toolbar {
-                EditButton()
-            }
+            .toolbar { EditButton() }
         }
     }
 
